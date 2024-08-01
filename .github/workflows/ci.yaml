@@ -1,0 +1,13 @@
+name: Default workflow
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+jobs:
+  call-workflow:
+    uses: anqa-ag/workflow-templates/.github/workflows/docker.yml@main
+    with:
+      IMAGE_REPOSITORY: anqa-monitor
+    secrets: inherit
