@@ -8,7 +8,7 @@ dotenvConfig()
 
 export default async function main() {
   // process.env.MAX_SLEEP = "1000"
-  // console.log(`process.env.MAX_SLEEP`, process.env.MAX_SLEEP)
+  console.log(`process.env.MAX_SLEEP`, process.env.MAX_SLEEP)
   while (true) {
     const sleepTime = randomInt(1_000, Number(process.env.MAX_SLEEP) || 300_000)
     console.log(`sleepTime`, sleepTime)

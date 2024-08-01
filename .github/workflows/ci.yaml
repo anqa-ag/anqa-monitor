@@ -3,11 +3,85 @@ on:
   push:
     branches:
       - "main"
-  pull_request:
+
+env:
+  IMAGE_REPOSITORY: anqa-monitor
+  AWS_REGION: ap-southeast-1
 
 jobs:
-  call-workflow:
-    uses: anqa-ag/workflow-templates/.github/workflows/docker.yml@main
-    with:
-      IMAGE_REPOSITORY: anqa-monitor
-    secrets: inherit
+  docker:
+    runs-on: ubuntu-latest
+    #needs: ["trivy"]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/release')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: prepare
+        id: before_script
+        run: |
+          #!/bin/bash
+
+          if [[ "$IMAGE_REPOSITORY" == "" ]]; then
+            echo "IMAGE_REPOSITORY must be define."
+            exit 1
+          fi
+
+          BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})
+          IMAGE_TAG=""
+
+          if [[ "${BRANCH_NAME}" == "main" || "${BRANCH_NAME}" == "master" ]]; then
+            IMAGE_TAG=${BRANCH_NAME}-$(echo ${GITHUB_SHA::7})
+          elif [[ "${BRANCH_NAME}" == release-* ]]; then
+            IMAGE_TAG=${BRANCH_NAME}.${GITHUB_RUN_NUMBER}
+          elif [[ "${BRANCH_NAME}" == release ]]; then
+            IMAGE_TAG=${BRANCH_NAME}.${GITHUB_RUN_NUMBER}
+          elif [[ "${BRANCH_NAME}" == staging ]]; then
+            IMAGE_TAG=${BRANCH_NAME}.${GITHUB_RUN_NUMBER}
+          else
+            echo "Docker build only happens in branch 'main' or 'release-*'"
+            exit 0
+          fi
+
+          echo "::set-output name=BRANCH_NAME::${BRANCH_NAME}"
+          echo "::set-output name=IMAGE_URL::${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-${{ env.SERVICE }}-buildx
+
+      - name: Create repository
+        uses: int128/create-ecr-repository-action@v1
+        id: ecr
+        with:
+          repository: ${{ env.IMAGE_REPOSITORY }}
+
+      - name: Docker build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ steps.before_script.outputs.IMAGE_URL }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
