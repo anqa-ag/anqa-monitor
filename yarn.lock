@@ -10,10 +10,10 @@
     "@jridgewell/gen-mapping" "^0.3.5"
     "@jridgewell/trace-mapping" "^0.3.24"
 
-"@anqa-ag/ts-sdk@^0.1.0-beta.5":
-  version "0.1.0-beta.5"
-  resolved "https://registry.yarnpkg.com/@anqa-ag/ts-sdk/-/ts-sdk-0.1.0-beta.5.tgz#830edcb04d428f21cf2909df373d015f00d28165"
-  integrity sha512-gGgqeRZE9f929wlfhBnZXgIaJGiLjOrWeAFjQRl6YKhTMCcYL4JMk6bDMyruPub6/HSy4yLnOva9JdEiS81d0Q==
+"@anqa-ag/ts-sdk@^0.1.0-beta.6":
+  version "0.1.0-beta.6"
+  resolved "https://registry.yarnpkg.com/@anqa-ag/ts-sdk/-/ts-sdk-0.1.0-beta.6.tgz#6585775b8ddb30f91ef9a4779405f66ba0450a06"
+  integrity sha512-FiTG9ryZb8nmFnLDkzmwmqF72Bem1jd3OPNB/KctZqnSzxP+5EDPEESTAbgNgjeODcGxFcWMUYaaoMqOg+AGug==
   dependencies:
     "@aptos-labs/ts-sdk" "^1.19.0"
     "@ethersproject/units" "^5.7.0"
